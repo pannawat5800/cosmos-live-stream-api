@@ -1,7 +1,7 @@
 
 const Collections = {
-    LiveStreamSetting: 'LiveStreamSetting',
-    ChatData: 'ChatData'
+    LiveStreamSetting: 'live_stream_settings',
+    ChatData: 'chat_datas'
 }
 
 const ChatDataType = {
