@@ -6,21 +6,13 @@ const { errorApiHandler, notFoundApiHandler } = require('./core/error_handle_api
 const cors = require('cors')
 const app = express()
 
-
-// const port = process.env.PORT || 4000
-
-
-const AuthRouter = require('./routes/auth.route')
-const LiveStreamRouter = require('./routes/live-stream.route')
-
+const ApiRouter = require('./routes/index.route')
 
 app.use(cors())
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-
-app.use('/auth', AuthRouter)
-app.use('/live-stream', LiveStreamRouter)
+app.use('/live_api', ApiRouter)
 
 
 // app.use('*', notFoundApiHandler);
