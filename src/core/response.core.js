@@ -62,7 +62,7 @@ class UnAuthorized {
 class InternalError {
     constructor(message) {
         this.code = 500
-        this.error = ErrorType.UnAuthorized
+        this.error = ErrorType.InternalError
         this.message = message;
     }
 }

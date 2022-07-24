@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { ChatDataType, ChatDataStatus } = require('./data.model');
 const { Collections } = require('./data.model')
 
+const Schema = mongoose.Schema
 const ChatDataSchema = mongoose.Schema({
     roomId: {
         type: String,
@@ -15,7 +16,7 @@ const ChatDataSchema = mongoose.Schema({
     contentType: {
         type: String,
         required: true,
-        enum: [ChatDataType.Message, ChatDataType.Link, ChatDataType.Gift]
+        enum: [...Object.keys(ChatDataType)]
     },
     status: {
         type: String,
@@ -23,7 +24,10 @@ const ChatDataSchema = mongoose.Schema({
         default: ChatDataStatus.Sending
     },
     requestId: String,
-    toMember: String,
+    documentId: String,
+    gift: Schema.Types.ObjectId,
+    point: Number,
+    toMember: Schema.Types.ObjectId,
     createdAt: { type: Date, default: Date.now, index: true },
     updatedAt: { type: Date, default: Date.now, index: true }
 }, { timestamps: true })

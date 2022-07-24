@@ -2,7 +2,7 @@ const { NotFoundResource, InternalError } = require('../core/response.core')
 const LiveStreamSettingRespository = require('../respository/live-stream-setting.respository');
 
 const { generateToken04 } = require('../utils/zegoServerAssistant');
-const { appID, serverSecrete, effectiveTimeInSeconds } = require('../core/config.core')
+const { appID, serverSecret, effectiveTimeInSeconds } = require('../core/config.core')
 const logger = require('../core/logger.core');
 
 
@@ -26,7 +26,7 @@ const generateZegoEngineTokenForUser = async (userId, roomID) => {
             },
             stream_id_list: null
         }
-        const token = generateToken04(appID, userId, serverSecrete, effectiveTimeInSeconds, JSON.stringify(payload))
+        const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
         
     } catch (error) {
@@ -46,7 +46,7 @@ const generateZegoEngineTokenForUndefindUser = async (userId, roomID) => {
             },
             stream_id_list: null
         }
-        const token = generateToken04(appID, userId, serverSecrete, effectiveTimeInSeconds, JSON.stringify(payload))
+        const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
     } catch(error) {
         logger.error(`Generate zego engin token for undefind error: ${error}`)
@@ -70,7 +70,7 @@ const generateZegoEngineTokenForAdmin = async (userId, roomID) => {
             },
             stream_id_list: null
         }
-        const token = generateToken04(appID, userId, serverSecrete, effectiveTimeInSeconds, JSON.stringify(payload))
+        const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
     } catch(error) {
         logger.error(`Generate zego engin token for admin error: ${error}`)
