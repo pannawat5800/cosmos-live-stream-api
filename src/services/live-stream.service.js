@@ -1,11 +1,12 @@
 const logger = require('../core/logger.core');
-const { NotFoundResource, InternalError } = require('../core/response.core');
+const { NotFoundResource, InternalError, BadRequest } = require('../core/response.core');
 
 const ZegoAPIRespository = require('../respository/zego.respository')
 const LiveStreamSettingRespository = require('../respository/live-stream-setting.respository');
 const ChatDataRespository = require('../respository/chat.respository');
 const ChatGiftFirestoreDB = require('../respository/chat-firestore.respository')
 const cosmosApiRespository = require('../respository/cosmos_api.respository')
+const cosmosVoteApiRespository = require('../respository/cosmos_vote_api.respository')
 
 const { ChatDataStatus, ChatDataType } = require('../models/data.model');
 
@@ -15,123 +16,133 @@ const zegoAPIRespository = new ZegoAPIRespository()
 const chatGiftFirestoreDB = new ChatGiftFirestoreDB()
 
 const sendMessageToChatLiveStreamService = async (params) => {
-    try {
 
-        const { roomId, message, user } = params
-        const isRoomExist = await liveStreamSettingRespository.roomIsExisted(roomId)
+    const { roomId, message, user } = params
+    const isRoomExist = await liveStreamSettingRespository.roomIsExisted(roomId)
 
-        if (!isRoomExist) {
-            logger.error(`room id (${roomId}) does not exist.`)
-            throw new NotFoundResource("room id does not exist.")
-        }
-
-        logger.info('start save chat data')
-        const chatData = await chatDataRespository.create(
-            roomId,
-            user.id,
-            message,
-            ChatDataType.Message,
-        )
-
-        logger.info('start send broadcast message to zego engine')
-
-        const content = JSON.stringify({
-            message: message,
-            contentType: ChatDataType.Message
-        })
-        const userName = JSON.stringify({
-            image: user.image,
-            name: user.name,
-        })
-        const sendChat = await zegoAPIRespository.sendBarrageMessage(
-            roomId,
-            user.id,
-            userName,
-            content,
-        )
-        console.log('send chat: ', sendChat)
-
-        const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
-        const updateChateData = await chatDataRespository
-            .updateSendingStatus(
-                chatData._id.toHexString(),
-                sendChat.data?.RequestId || '',
-                messageStatus
-            )
-
-        if (!sendChat.isSuccess) throw new InternalError('Send message to chat room is falided')
-        return updateChateData
-
-    } catch (error) {
-        logger.error(`Send message to chat live stream error: ${error}`)
-        throw new InternalError('Send message to chat live stream error')
+    if (!isRoomExist) {
+        logger.error(`room id (${roomId}) does not exist.`)
+        throw new NotFoundResource("room id does not exist.")
     }
+
+    logger.info('start save chat data')
+    const chatData = await chatDataRespository.create(
+        roomId,
+        user.id,
+        message,
+        ChatDataType.Message,
+    )
+
+    logger.info('start send broadcast message to zego engine')
+
+    const content = JSON.stringify({
+        message: message,
+        contentType: ChatDataType.Message
+    })
+    const userName = JSON.stringify({
+        image: user.image,
+        name: user.name,
+    })
+    
+    const sendChat = await zegoAPIRespository.sendBarrageMessage(
+        roomId,
+        user.id,
+        userName,
+        content,
+    )
+    console.log('send chat: ', sendChat)
+
+    const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
+    const updateChateData = await chatDataRespository
+        .updateSendingStatus(
+            chatData._id.toHexString(),
+            sendChat.data?.RequestId || '',
+            messageStatus
+        )
+
+    if (!sendChat.isSuccess) throw new InternalError('Send message to chat room is falided')
+    return updateChateData
+
+
 }
 
 const sendGiftToChatLiveStreamService = async (params) => {
-    try {
-        const { roomId, giftId, toMember, user } = params
-        const isRoomExist = await liveStreamSettingRespository.roomIsExisted(roomId)
-        if (!isRoomExist) {
-            logger.error(`room id (${roomId}) does not exist.`)
-            throw new NotFoundResource("room id does not exist.")
-        }
 
-        const [candidate, gift] = await Promise.all([
-            cosmosApiRespository.getCadidate(toMember),
-            cosmosApiRespository.getGift(giftId)
-        ])
+    const { roomId, giftId, toMember, user, accessToken } = params
+    const [isRoomExist, candidate, gift, balance] = await Promise.all([
+        liveStreamSettingRespository.roomIsExisted(roomId),
+        cosmosApiRespository.getCadidate(toMember),
+        cosmosApiRespository.getGift(giftId),
+        cosmosVoteApiRespository.getUserBalance(accessToken)
+    ])
 
-        if (!candidate) {
-            throw new NotFoundResource('Cadidate is not found')
-        }
+    if (!isRoomExist) {
+        logger.error(`room id (${roomId}) does not exist.`)
+        throw new NotFoundResource("room id does not exist.")
+    }
 
-        if (!gift) {
-            throw new NotFoundResource('Gift is not found.')
-        }
+    if (!candidate) {
+        throw new NotFoundResource('Cadidate is not found')
+    }
 
-        console.log('cadidate: ', candidate)
-        console.log('gift: ', gift)
+    if (!gift) {
+        throw new NotFoundResource('Gift is not found.')
+    }
 
+    if (!balance) {
+        throw new BadRequest('Youre balace is empty')
+    }
 
-        const chatData = await chatDataRespository.createForGift(
-            roomId,
-            user.id,
-            giftId,
-            ChatDataType.Gift,
-            toMember
+    if (balance < gift.token) {
+        throw new BadRequest('Youre token is not enough for sending the gift.', 'not_enough_token')
+    }
+
+    console.log('cadidate: ', candidate)
+    console.log('gift: ', gift)
+
+    const resultSendGift = await cosmosApiRespository.sentGiftHistory({
+        user_id: user.id,
+        candidate_id: candidate._id,
+        gift_id: gift._id,
+        token: gift.token,
+        username: user.name,
+        email: user.email,
+    })
+
+    console.log('result send gift: ', resultSendGift)
+
+    const chatData = await chatDataRespository.createForGift(
+        roomId,
+        user.id,
+        giftId,
+        ChatDataType.Gift,
+        toMember
+    )
+
+    const sendChat = await chatGiftFirestoreDB.create({
+        roomId,
+        user,
+        gift: {
+            id: gift._id,
+            name: gift.name,
+            url: gift.image.url,
+        },
+        toMember: candidate.code,
+        contentType: ChatDataType.Gift
+    })
+
+    console.log("send caht id: ", sendChat.id)
+
+    // const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
+    const updateChateData = await chatDataRespository
+        .updateSendingStatusWithDocId(
+            chatData._id.toHexString(),
+            sendChat.id || '',
+            ChatDataStatus.Success
         )
 
-        const sendChat = await chatGiftFirestoreDB.create({
-            roomId,
-            user,
-            gift: {
-                id: gift._id,
-                name: gift.name,
-                url: gift.image.url,
-            },
-            toMember: candidate.code,
-            contentType: ChatDataType.Gift
-        })
+    return updateChateData
 
-        console.log("send caht id: ", sendChat.id)
-
-        // const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
-        const updateChateData = await chatDataRespository
-            .updateSendingStatusWithDocId(
-                chatData._id.toHexString(),
-                sendChat.id || '',
-                ChatDataStatus.Success
-            )
-
-        return updateChateData
-
-
-    } catch (error) {
-        console.log(error)
-        logger.error(`Send gift to chat live stream error: ${error}`)
-        throw new InternalError('Send message to chat live stream error')
-    }
 }
 
 const getCurrentChatListOnLiveStream = async (roomId) => {
@@ -153,55 +164,74 @@ const getNumberUsersView = async (roomId) => {
 
 
 const sendPointToChatLiveStreamService = async (params) => {
-    try {
-        const { roomId, token, toMember, user } = params
-        const isRoomExist = await liveStreamSettingRespository.roomIsExisted(roomId)
-        if (!isRoomExist) {
-            logger.error(`room id (${roomId}) does not exist.`)
-            throw new NotFoundResource("room id does not exist.")
-        }
-        const [candidate, vote] = await Promise.all([
-            cosmosApiRespository.getCadidate(toMember),
-            cosmosApiRespository.getVoteParameter()
-        ])
-        console.log(vote)
-        const {token2, point } = vote
-        const votePoint = point * token / token2
+    const { roomId, token, toMember, user, accessToken } = params
 
-        const chatData = await chatDataRespository.createForPoint(
-            roomId,
-            user.id,
-            votePoint,
-            ChatDataType.Point,
-            toMember
+    const [isRoomExist, candidate, vote, balance] = await Promise.all([
+        liveStreamSettingRespository.roomIsExisted(roomId),
+        cosmosApiRespository.getCadidate(toMember),
+        cosmosApiRespository.getVoteParameter(),
+        cosmosVoteApiRespository.getUserBalance(accessToken),
+    ])
+
+    if (!isRoomExist) {
+        logger.error(`room id (${roomId}) does not exist.`)
+        throw new NotFoundResource("room id does not exist.")
+    }
+
+    if (!candidate) {
+        throw new NotFoundResource('Cadidate is not found')
+    }
+
+    if (!balance) {
+        throw new BadRequest('Youre balace is empty')
+    }
+
+    if (balance < token) {
+        throw new BadRequest('Youre token is not enough for sending the point.', 'not_enough_token')
+    }
+
+    const { token2, point } = vote
+    const votePoint = point * token / token2
+
+    const data = {
+        userid: user.id,
+        username: user.name,
+        email: user.email,
+        token: token,
+        point: votePoint,
+        candidate: candidate._id
+    }
+    const voteResult = await cosmosVoteApiRespository.sendPointVote(data)
+    console.log('vote resutl: ', voteResult)
+
+    const chatData = await chatDataRespository.createForPoint(
+        roomId,
+        user.id,
+        votePoint,
+        ChatDataType.Point,
+        toMember
+    )
+
+    const sendChat = await chatGiftFirestoreDB.create({
+        roomId,
+        user,
+        point: votePoint,
+        toMember: candidate.code,
+        contentType: ChatDataType.Point,
+    })
+
+    console.log("send caht id: ", sendChat.id)
+
+    // const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
+    const updateChateData = await chatDataRespository
+        .updateSendingStatusWithDocId(
+            chatData._id.toHexString(),
+            sendChat.id || '',
+            ChatDataStatus.Success
         )
 
-        const sendChat = await chatGiftFirestoreDB.create({
-            roomId,
-            user,
-            point: votePoint,
-            toMember: candidate.code,
-            contentType: ChatDataType.Point,
-        })
+    return updateChateData
 
-        console.log("send caht id: ", sendChat.id)
-
-        // const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
-        const updateChateData = await chatDataRespository
-            .updateSendingStatusWithDocId(
-                chatData._id.toHexString(),
-                sendChat.id || '',
-                ChatDataStatus.Success
-            )
-
-        return updateChateData
-
-
-    } catch (error) {
-        console.log(error)
-        logger.error(`Send gift to chat live stream error: ${error}`)
-        throw new InternalError('Send message to chat live stream error')
-    }
 }
 
 

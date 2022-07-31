@@ -8,6 +8,11 @@ class ChatGiftFirestoreDB  {
         const result = await this.collection.add({ ...data, createAt: new Date()})
         return result
     }
+
+    async deleteAll() {
+        const result = await this.collection.deleteAll()
+        return result
+    }
 }
 
 module.exports = ChatGiftFirestoreDB

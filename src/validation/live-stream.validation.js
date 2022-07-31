@@ -16,8 +16,10 @@ const SendGiftSchema = Joi.object({
     user: Joi.object({
         id: Joi.string().required(),
         name: Joi.string().required(),
-        image: Joi.string().allow(null, '')
-    })
+        image: Joi.string().allow(null, ''),
+        email: Joi.string().allow(null, '')
+    }),
+    accessToken: Joi.string().required()
 })
 
 const SendPointSchema = Joi.object({
@@ -27,8 +29,10 @@ const SendPointSchema = Joi.object({
     user: Joi.object({
         id: Joi.string().required(),
         name: Joi.string().required(),
-        image: Joi.string().allow(null, '')
-    })
+        image: Joi.string().allow(null, ''),
+        email: Joi.string().allow(null, '')
+    }),
+    accessToken: Joi.string().required()
 })
 
 module.exports = {

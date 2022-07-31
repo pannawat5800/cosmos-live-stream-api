@@ -3,7 +3,8 @@ const Collections = {
     LiveStreamSetting: 'live_stream_settings',
     ChatData: 'chat_datas',
     Gifts: 'gifts',
-    Candidates: 'candidates'
+    Candidates: 'candidates',
+    User: 'users'
 }
 
 const ChatDataType = {

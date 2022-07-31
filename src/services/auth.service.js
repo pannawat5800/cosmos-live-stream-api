@@ -4,7 +4,7 @@ const LiveStreamSettingRespository = require('../respository/live-stream-setting
 const { generateToken04 } = require('../utils/zegoServerAssistant');
 const { appID, serverSecret, effectiveTimeInSeconds } = require('../core/config.core')
 const logger = require('../core/logger.core');
-
+const admin = require('../core/firebase.core')
 
 
 const liveStreamSettingRespository = new LiveStreamSettingRespository()
@@ -17,7 +17,7 @@ const generateZegoEngineTokenForUser = async (userId, roomID) => {
             logger.error(`room ID ${roomID} dose not exist.`)
             throw new NotFoundResource('This room id does not exist.')
         }
-        
+
         const payload = {
             room_id: roomID,
             privilege: {
@@ -28,7 +28,7 @@ const generateZegoEngineTokenForUser = async (userId, roomID) => {
         }
         const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
-        
+
     } catch (error) {
         console.log(error)
         logger.error(`Generate zego engin token for user error: ${error.toString()}`)
@@ -48,7 +48,7 @@ const generateZegoEngineTokenForUndefindUser = async (userId, roomID) => {
         }
         const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
-    } catch(error) {
+    } catch (error) {
         logger.error(`Generate zego engin token for undefind error: ${error}`)
         throw new InternalError('Generate zego engin token for undefind user error')
     }
@@ -72,18 +72,41 @@ const generateZegoEngineTokenForAdmin = async (userId, roomID) => {
         }
         const token = generateToken04(appID, userId, serverSecret, effectiveTimeInSeconds, JSON.stringify(payload))
         return token
-    } catch(error) {
+    } catch (error) {
         logger.error(`Generate zego engin token for admin error: ${error}`)
         throw new InternalError('Generate zego engin token for admin error')
-        
+
     }
 }
 
+const generateFirebaseToken = async (userId) => {
+    try {
+        const user = await admin.auth().getUser(userId).catch((error) => null)
+        console.log(user)
+        let uid;
+        if (!user) {
+            const userRecord = await admin.auth()
+                .createUser({
+                    uid: userId,
+                    email: `${userId}@gmail.com`,
+                })
+            uid = userRecord.uid
+        } else {
+            uid = user.uid
+        }
 
+        const token = await admin.auth().createCustomToken(uid)
+        return token
+    } catch(error) {
+        logger.error(`generate token error`)
+        throw new InternalError(error.toString())
+    }
+}
 
 
 module.exports = {
     generateZegoEngineTokenForUser,
     generateZegoEngineTokenForUndefindUser,
-    generateZegoEngineTokenForAdmin
+    generateZegoEngineTokenForAdmin,
+    generateFirebaseToken
 }

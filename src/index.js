@@ -5,7 +5,7 @@ const logger = require('./core/logger.core');
 const { errorApiHandler, notFoundApiHandler } = require('./core/error_handle_api.core')
 const cors = require('cors')
 const app = express()
-
+require('./schedules/index.schedule')
 const ApiRouter = require('./routes/index.route')
 
 app.use(cors())

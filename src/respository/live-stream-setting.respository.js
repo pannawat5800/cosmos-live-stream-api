@@ -8,8 +8,8 @@ class LiveStreamSettingRespository {
      */
     async createLiveSetting(data) {
         const livestream = new LiveStreamSetting({
-            streamId: data.streamId,
-            roomId: data.roomId,
+            streamID: data.streamId,
+            roomID: data.roomId,
             status: 'active'
         })
 
@@ -19,12 +19,17 @@ class LiveStreamSettingRespository {
 
 
     async roomIsExisted(roomId) {
-        const result = await LiveStreamSetting.exists({ roomId, status: 'active' })
+        const result = await LiveStreamSetting.exists({ roomID: roomId, status: 'active' })
         return result
     }
 
     async getActiveOne() {
-        const result = await LiveStreamSetting.findOne({ status: 'active' })
+        const result = await LiveStreamSetting.findOne({ status: 'active' }).lean()
+        return result
+    }
+
+    async updateAllInActive() {
+        const result = await LiveStreamSetting.updateMany({ status: 'active' }, { status: 'inactive'})
         return result
     }
 }

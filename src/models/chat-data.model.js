@@ -9,7 +9,7 @@ const ChatDataSchema = mongoose.Schema({
         required: true,
     },
     userId: {
-        type: String,
+        type: Schema.Types.ObjectId,
         required: true,
     },
     content: String,

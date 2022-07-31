@@ -10,7 +10,9 @@ const config = {
     dbUsername: process.env.DB_USERNAME|| 'root',
     dbPass: process.env.DB_PASSWORD || 'example',
     port: Number(process.env.PORT),
-    cosmosApiUrl: process.env.COSMOS_API
+    cosmosApiUrl: process.env.COSMOS_API,
+    cosmosVoteApiUrl: process.env.COSMOS_VOTE_API,
+    accessKeyVoteApi: process.env.COSMOS_VOTE_ACCESS_KEY
 }
 
 module.exports = config

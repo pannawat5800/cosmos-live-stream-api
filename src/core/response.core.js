@@ -42,10 +42,11 @@ class ConflictData {
 
 
 class BadRequest {
-    constructor(message) {
+    constructor(message, event) {
         this.code = 400;
         this.error = ErrorType.BadRequest
         this.message = message;
+        this.event = event
     }
 }
 

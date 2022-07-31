@@ -4,10 +4,10 @@ const mongoose = require('mongoose')
 
 class ChatDataRespository {
 
-    async create(roomId, userId, content, contentType, ) {
+    async create(roomId, userId, content, contentType,) {
         const chatData = new ChatData({
             roomId: roomId,
-            userId: userId,
+            userId: new mongoose.Types.ObjectId(userId),
             content: content,
             contentType: contentType,
         })
@@ -62,7 +62,7 @@ class ChatDataRespository {
 
     async getChatsByStatusAndRoom(roomId, status) {
         const result = await ChatData.aggregate([
-            { 
+            {
                 $match: {
                     roomId: roomId,
                     status: status
@@ -78,11 +78,22 @@ class ChatDataRespository {
             },
             {
                 $lookup: {
+                    from: Collections.User,
+                    let: { userId: '$userId' },
+                    pipeline: [
+                        { "$match": { "$expr": { "$eq": ["$_id", "$$userId"] } } },
+                        { $project: { username: 1, profile: 1 } }
+                    ],
+                    as: 'user'
+                }
+            },
+            {
+                $lookup: {
                     from: Collections.Candidates,
-                    let: { toMember : '$toMember'},
+                    let: { toMember: '$toMember' },
                     pipeline: [
                         { "$match": { "$expr": { "$eq": ["$_id", "$$toMember"] } } },
-                        { $project: { code: 1 }}
+                        { $project: { code: 1 } }
                     ],
                     as: 'toMember'
                 }
@@ -99,8 +110,19 @@ class ChatDataRespository {
                     preserveNullAndEmptyArrays: true,
                 }
             },
-            { $sort: { createAt : 1 }}
+            {
+                $unwind: {
+                    path: '$user',
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            { $sort: { createAt: 1 } }
         ]).exec()
+        return result
+    }
+
+    async roomIdIsExistInChat(roomID) {
+        const result = await ChatData.exists({ roomID })
         return result
     }
 }
