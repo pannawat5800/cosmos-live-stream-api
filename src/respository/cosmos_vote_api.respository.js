@@ -18,6 +18,20 @@ class CosmosVoteApiRespository {
         return data.balance || 0
     }
 
+    async addCadidateVote(params, accesstoken) {
+        try {
+            const { data } = await this.api.post('/addCandidateVote', {
+                "candidateId": params.candidateId,
+                "point": params.point,
+                "total_point": params.total_point,
+                "token": params.token
+            }, { headers: { 'x-access-token': accesstoken } })
+            return data
+        } catch(error) {
+            throw error.response.data || error.message
+        }
+    }
+
     async sendPointVote(params) {
         try {
             const { data } = await this.api.post('/UpdateVoteLog', {

@@ -42,6 +42,17 @@ class CosmosApiRespository {
        }
     }
 
+    async updatePointCandidate(cadidateId, totalPoint) {
+        try {
+            const { data } = await this.api.patch(`/candidate/total_points/${cadidateId}`, {
+                "total_points": totalPoint
+            })
+            return data
+        } catch(error) {
+            throw error.response || error.message
+        }
+    }
+
 }
 
 module.exports = new CosmosApiRespository

@@ -69,12 +69,17 @@ const sendMessageToChatLiveStreamService = async (params) => {
 const sendGiftToChatLiveStreamService = async (params) => {
 
     const { roomId, giftId, toMember, user, accessToken } = params
-    const [isRoomExist, candidate, gift, balance] = await Promise.all([
+    const [isRoomExist, candidate, gift, balance, voteParameter] = await Promise.all([
         liveStreamSettingRespository.roomIsExisted(roomId),
         cosmosApiRespository.getCadidate(toMember),
         cosmosApiRespository.getGift(giftId),
-        cosmosVoteApiRespository.getUserBalance(accessToken)
+        cosmosVoteApiRespository.getUserBalance(accessToken),
+        cosmosApiRespository.getVoteParameter(),
     ])
+
+    if (!voteParameter.isVoteOn) {
+        throw new BadRequest('vote is not open', 'vote_not_allow')
+    }
 
     if (!isRoomExist) {
         logger.error(`room id (${roomId}) does not exist.`)
@@ -173,6 +178,10 @@ const sendPointToChatLiveStreamService = async (params) => {
         cosmosVoteApiRespository.getUserBalance(accessToken),
     ])
 
+    if (!vote.isVoteOn) {
+        throw new BadRequest('vote is not open', 'vote_not_allow')
+    }
+
     if (!isRoomExist) {
         logger.error(`room id (${roomId}) does not exist.`)
         throw new NotFoundResource("room id does not exist.")
@@ -192,6 +201,14 @@ const sendPointToChatLiveStreamService = async (params) => {
 
     const { token2, point } = vote
     const votePoint = point * token / token2
+
+    const totalPoint = candidate.total_points + votePoint
+
+    await cosmosApiRespository.updatePointCandidate(
+        candidate._id,
+        totalPoint
+    )
+
 
     const data = {
         userid: user.id,
