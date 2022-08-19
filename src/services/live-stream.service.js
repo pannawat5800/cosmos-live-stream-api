@@ -50,7 +50,7 @@ const sendMessageToChatLiveStreamService = async (params) => {
         userName,
         content,
     )
-    console.log('send chat: ', sendChat)
+    // console.log('send chat: ', sendChat)
 
     const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
     const updateChateData = await chatDataRespository
@@ -102,8 +102,6 @@ const sendGiftToChatLiveStreamService = async (params) => {
         throw new BadRequest('Youre token is not enough for sending the gift.', 'not_enough_token')
     }
 
-    console.log('cadidate: ', candidate)
-    console.log('gift: ', gift)
 
     const resultSendGift = await cosmosApiRespository.sentGiftHistory({
         user_id: user.id,
@@ -202,14 +200,13 @@ const sendPointToChatLiveStreamService = async (params) => {
     const { token2, point } = vote
     const votePoint = point * token / token2
 
-    const totalPoint = candidate.total_points + votePoint
-
-    await cosmosApiRespository.updatePointCandidate(
+    // const totalPoint = candidate.total_points + votePoint
+   await cosmosApiRespository.addPointToCandidate(
         candidate._id,
-        totalPoint
+        token,
+        accessToken
     )
-
-
+    
     const data = {
         userid: user.id,
         username: user.name,
@@ -237,7 +234,7 @@ const sendPointToChatLiveStreamService = async (params) => {
         contentType: ChatDataType.Point,
     })
 
-    console.log("send caht id: ", sendChat.id)
+    // console.log("send caht id: ", sendChat.id)
 
     // const messageStatus = sendChat.isSuccess ? ChatDataStatus.Success : ChatDataStatus.Failed
     const updateChateData = await chatDataRespository

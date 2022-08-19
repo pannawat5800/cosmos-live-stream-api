@@ -1,6 +1,5 @@
 const axios = require("axios")
 const { cosmosApiUrl } = require('../core/config.core');
-const { InternalError } = require("../core/response.core");
 class CosmosApiRespository {
 
     constructor() {
@@ -14,9 +13,9 @@ class CosmosApiRespository {
         const { data } = await this.api.get(`/candidate/show/${id}`)
         return data
     }
-    
+
     async getGift(id) {
-        const { data }= await this.api.get(`/gift/show/${id}`)
+        const { data } = await this.api.get(`/gift/show/${id}`)
         return data
     }
 
@@ -26,20 +25,20 @@ class CosmosApiRespository {
     }
 
     async sentGiftHistory(params) {
-       try {
-           const { data } = await this.api.post('/sentGiftHistory/sendAndRecord', {
-               "user_id": params.user_id,
-               "candidate_id": params.candidate_id,
-               "gift_id": params.gift_id,
-               "send_date_time": new Date(),
-               "token": params.token,
-               "username": params.username,
-               "email": params.email,
-           })
-           return data
-       } catch(error) {
-           throw error.response || error.message
-       }
+        try {
+            const { data } = await this.api.post('/sentGiftHistory/sendAndRecord', {
+                "user_id": params.user_id,
+                "candidate_id": params.candidate_id,
+                "gift_id": params.gift_id,
+                "send_date_time": new Date(),
+                "token": params.token,
+                "username": params.username,
+                "email": params.email,
+            })
+            return data
+        } catch (error) {
+            throw error.response || error.message
+        }
     }
 
     async updatePointCandidate(cadidateId, totalPoint) {
@@ -48,7 +47,21 @@ class CosmosApiRespository {
                 "total_points": totalPoint
             })
             return data
-        } catch(error) {
+        } catch (error) {
+            throw error.response || error.message
+        }
+    }
+
+    async addPointToCandidate(candidateId, token, userToken) {
+        try {
+            const { data } = await this.api.patch('/candidate/addPointsToCandidate', {
+                candidate_id: candidateId,
+                vote_token: token,
+            }, {
+                headers: { 'authorization': `token ${userToken}` }
+            })
+            return data
+        } catch (error) {
             throw error.response || error.message
         }
     }
