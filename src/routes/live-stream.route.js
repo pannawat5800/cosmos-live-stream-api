@@ -7,7 +7,9 @@ const {
     GetLiveStreamSetting,
     GetChats, 
     GetUserNumber, 
-    GetStreamList 
+    GetStreamList,
+    StartRecord,
+    StopRecord
 } = require('../controller/live-stream.controller')
 
 router.put('/chats', SendChatMessage)
@@ -17,5 +19,7 @@ router.put('/gifts', SendGift)
 router.get('/setting', GetLiveStreamSetting)
 router.put('/points', SendPoint)
 router.get('/list/rooms/:roomId', GetStreamList)
+router.post('/record/start', StartRecord)
+router.post('/record/stop', StopRecord)
 
 module.exports = router

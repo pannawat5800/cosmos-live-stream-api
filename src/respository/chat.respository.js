@@ -55,10 +55,6 @@ class ChatDataRespository {
         return result
     }
 
-    // async getChatsByStatusAndRoom(roomId, status) {
-    //     const result = await ChatData.find({ roomId, status }).sort({ createAt: 1 }).exec()
-    //     return result
-    // }
 
     async getChatsByStatusAndRoom(roomId, status) {
         const result = await ChatData.aggregate([
@@ -125,6 +121,8 @@ class ChatDataRespository {
         const result = await ChatData.exists({ roomID })
         return result
     }
+
+    
 }
 
 module.exports = ChatDataRespository

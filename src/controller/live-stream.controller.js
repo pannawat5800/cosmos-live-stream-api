@@ -3,7 +3,9 @@ const { sendMessageToChatLiveStreamService,
     sendPointToChatLiveStreamService, 
     getCurrentChatListOnLiveStream, 
     getNumberUsersView,
-    getStreamActiveList
+    getStreamActiveList,
+    startRecordStream,
+    stopRecordStream
 } = require("../services/live-stream.service")
 const { SendChatMessageSchema, SendGiftSchema, SendPointSchema } = require('../validation/live-stream.validation')
 const catchAsync = require("../utils/catchAsync")
@@ -43,8 +45,22 @@ const SendPoint = catchAsync(async (request, response) => {
     response.json(result)
 })
 
-const RecordStream = catchAsync(async (request, response) => {
-    response.send('success')
+const StartRecord = catchAsync(async (request, response) => {
+    const { streamId } = request.body
+    if (!streamId) {
+        throw new BadRequest('stream id is required')
+    }
+    const result = await startRecordStream(streamId)
+    response.json(result)
+})
+
+const StopRecord = catchAsync(async (request, response) => {
+    const { streamId } = request.body
+    if (!streamId) {
+        throw new BadRequest('stream id is required')
+    }
+    const result = await stopRecordStream(streamId)
+    response.json(result)
 })
 
 const GetLiveStreamSetting = catchAsync(async (request, response) => {
@@ -92,9 +108,10 @@ module.exports = {
     SendGift,
     SendChatMessage,
     SendPoint,
-    RecordStream,
     GetLiveStreamSetting,
     GetChats,
     GetUserNumber,
-    GetStreamList
+    GetStreamList,
+    StartRecord,
+    StopRecord
 }

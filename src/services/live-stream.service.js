@@ -256,11 +256,31 @@ const getStreamActiveList = async (roomId) => {
     const result = await zegoAPIRespository.getStreamsByRoom(roomId)
     console.log(result)
     if (!result.isSuccess) {
-        throw InternalError('Get number user view error')
+        throw new InternalError('Get number user view error')
     }
 
     const stream = result.data.Data.StreamList
     return stream
+}
+
+const startRecordStream = async (streamId) => {
+    const isStreamExist = await liveStreamSettingRespository.streamIsExisted(streamId)
+    if (!isStreamExist) {
+        throw new NotFoundResource('stream id dose not exist')
+    }
+
+    const result = await zegoAPIRespository.startRecordStreamOnServer(streamId)
+    return result
+}
+
+const stopRecordStream = async (streamId) => {
+    const isStreamExist = await liveStreamSettingRespository.streamIsExisted(streamId)
+    if (!isStreamExist) {
+        throw new NotFoundResource('stream id dose not exist')
+    }
+
+    const result = await zegoAPIRespository.stopRecordStreamOnServer(streamId)
+    return result
 }
 
 
@@ -270,5 +290,7 @@ module.exports = {
     sendPointToChatLiveStreamService,
     getCurrentChatListOnLiveStream,
     getNumberUsersView,
-    getStreamActiveList
+    getStreamActiveList,
+    startRecordStream,
+    stopRecordStream
 }

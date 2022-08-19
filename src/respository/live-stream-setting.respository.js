@@ -23,6 +23,11 @@ class LiveStreamSettingRespository {
         return result
     }
 
+    async streamIsExisted(streamId) {
+        const result = await LiveStreamSetting.exists({ streamID: streamId, status: 'active' })
+        return result
+    }
+
     async getActiveOne() {
         const result = await LiveStreamSetting.findOne({ status: 'active' }).lean()
         return result
