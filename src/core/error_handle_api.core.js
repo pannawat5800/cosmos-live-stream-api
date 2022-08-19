@@ -1,7 +1,7 @@
 const { NotFoundApi } = require("./response.core");
 
 const errorApiHandler = (error, _, res, next) => {
-
+    console.log('error handle : ', error)
     // const { statusCode = 500, message = "Something went wrong." } = err;
     res.status(error.code || 500).send(error);
 }

@@ -1,4 +1,4 @@
-const { generateZegoEngineTokenForUser, generateZegoEngineTokenForUndefindUser, generateZegoEngineTokenForAdmin } = require('../services/auth.service')
+const { generateZegoEngineTokenForUser, generateZegoEngineTokenForUndefindUser, generateZegoEngineTokenForAdmin, generateFirebaseToken } = require('../services/auth.service')
 const catchAsync = require('../utils/catchAsync')
 
 
@@ -20,8 +20,14 @@ const SignInAnonymous = catchAsync(async (request, response) => {
     response.json({ token })
 })
 
+const SignInCustomToken = catchAsync(async (request, response) => {
+    const { userId, isanonymouse } = request.body
+    const token = await generateFirebaseToken(userId)
+    response.json({ token })
+})
 module.exports = {
     SignInAdmin,
     SignInUser,
-    SignInAnonymous
+    SignInAnonymous,
+    SignInCustomToken
 }

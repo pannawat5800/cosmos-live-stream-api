@@ -42,10 +42,11 @@ class ConflictData {
 
 
 class BadRequest {
-    constructor(message) {
+    constructor(message, event) {
         this.code = 400;
         this.error = ErrorType.BadRequest
         this.message = message;
+        this.event = event
     }
 }
 
@@ -62,7 +63,7 @@ class UnAuthorized {
 class InternalError {
     constructor(message) {
         this.code = 500
-        this.error = ErrorType.UnAuthorized
+        this.error = ErrorType.InternalError
         this.message = message;
     }
 }

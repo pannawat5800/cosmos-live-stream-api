@@ -3,8 +3,8 @@ const { Collections } = require('../src/models/data.model')
 module.exports = {
   async up(db, client) {
     await db.collection(Collections.LiveStreamSetting).insertOne({
-      roomId: generateRoomId(),
-      streamId: generateStreamId(),
+      roomID: generateRoomId(),
+      streamID: generateStreamId(),
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
